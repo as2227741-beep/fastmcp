@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Notes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f0f0d;
+      --surface: #1a1a16;
+      --surface2: #222218;
+      --border: #2e2e26;
+      --accent: #c8a96e;
+      --accent2: #e8c98e;
+      --text: #e8e4d8;
+      --text-dim: #888070;
+      --text-dimmer: #4a4640;
+      --danger: #c0614e;
+    }
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+    }
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    .sidebar-header { padding: 28px 20px 20px; border-bottom: 1px solid var(--border); }
+    .app-title { font-family: 'Playfair Display', serif; font-size: 22px; font-style: italic; color: var(--accent); margin-bottom: 16px; }
+    .new-btn {
+      width: 100%; padding: 10px 16px;
+      background: var(--accent); color: #1a1510;
+      border: none; font-family: 'DM Mono', monospace;
+      font-size: 12px; font-weight: 500; letter-spacing: 0.08em;
+      text-transform: uppercase; cursor: pointer; transition: background 0.2s, transform 0.1s;
+    }
+    .new-btn:hover { background: var(--accent2); }
+    .new-btn:active { transform: scale(0.98); }
+    .search-wrap { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+    .search-input {
+      width: 100%; background: var(--surface2);
+      border: 1px solid var(--border); color: var(--text);
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      padding: 8px 12px; outline: none; transition: border-color 0.2s;
+    }
+    .search-input::placeholder { color: var(--text-dimmer); }
+    .search-input:focus { border-color: var(--accent); }
+    .notes-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .notes-list::-webkit-scrollbar { width: 4px; }
+    .notes-list::-webkit-scrollbar-thumb { background: var(--border); }
+    .note-item {
+      padding: 14px 20px; cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .note-item:hover { background: var(--surface2); }
+    .note-item.active { background: var(--surface2); border-left-color: var(--accent); }
+    .note-item-title { font-size: 13px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+    .note-item-preview { font-size: 11px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+    .note-item-meta { display: flex; align-items: center; gap: 6px; }
+    .note-item-date { font-size: 10px; color: var(--text-dimmer); }
+    .note-tag { font-size: 9px; padding: 1px 6px; border-radius: 2px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+    .empty-list { padding: 40px 20px; text-align: center; color: var(--text-dimmer); font-size: 12px; line-height: 1.8; }
+    .sidebar-footer { padding: 14px 20px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-dimmer); }
+    .main { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .editor-toolbar {
+      padding: 16px 32px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px; background: var(--surface);
+    }
+    .title-input {
+      flex: 1; background: transparent; border: none;
+      font-family: 'Playfair Display', serif; font-size: 22px;
+      color: var(--text); outline: none;
+    }
+    .title-input::placeholder { color: var(--text-dimmer); font-style: italic; }
+    .toolbar-actions { display: flex; gap: 8px; align-items: center; }
+    .tag-select {
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-dim); font-family: 'DM Mono', monospace;
+      font-size: 11px; padding: 5px 8px; outline: none; cursor: pointer;
+    }
+    .tag-select:focus { border-color: var(--accent); }
+    .icon-btn {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text-dim); padding: 6px 10px; cursor: pointer;
+      font-size: 13px; transition: all 0.15s; font-family: 'DM Mono', monospace;
+    }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .icon-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+    .editor-body { flex: 1; overflow-y: auto; padding: 32px; background: var(--bg); }
+    .editor-body::-webkit-scrollbar { width: 4px; }
+    .editor-body::-webkit-scrollbar-thumb { background: var(--border); }
+    .note-textarea {
+      width: 100%; min-height: calc(100vh - 180px);
+      background: transparent; border: none; color: var(--text);
+      font-family: 'DM Mono', monospace; font-size: 14px;
+      line-height: 1.9; outline: none; resize: none; letter-spacing: 0.01em;
+    }
+    .note-textarea::placeholder { color: var(--text-dimmer); font-style: italic; }
+    .editor-footer {
+      padding: 10px 32px; border-top: 1px solid var(--border);
+      background: var(--surface); display: flex;
+      justify-content: space-between; align-items: center;
+      font-size: 11px; color: var(--text-dimmer);
+    }
+    .save-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; margin-right: 6px; transition: background 0.3s; }
+    .save-dot.unsaved { background: #888; }
+    .welcome {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px; color: var(--text-dimmer);
+    }
+    .welcome-title { font-family: 'Playfair Display', serif; font-size: 48px; font-style: italic; color: var(--accent); opacity: 0.4; }
+    .welcome-sub { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    .note-item { animation: fadeIn 0.2s ease; }
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-left: 3px solid var(--accent); color: var(--text);
+      font-size: 12px; padding: 10px 18px; z-index: 1000;
+      animation: fadeIn 0.2s ease; font-family: 'DM Mono', monospace;
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    .toast.hide { opacity: 0; transform: translateY(8px); }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="app-title">Notes</div>
+      <button class="new-btn" onclick="newNote()">+ New Note</button>
+    </div>
+    <div class="search-wrap">
+      <input class="search-input" id="searchInput" placeholder="Search notes..." oninput="renderList()" />
+    </div>
+    <div class="notes-list" id="notesList"></div>
+    <div class="sidebar-footer" id="sidebarFooter">0 notes</div>
+  </aside>
+  <main class="main" id="mainArea"></main>
+
+  <script>
+    const TAGS = [
+      { label: 'None', value: '', color: '' },
+      { label: 'Personal', value: 'personal', color: '#5a8a6e' },
+      { label: 'Work', value: 'work', color: '#7a6aaa' },
+      { label: 'Ideas', value: 'ideas', color: '#c06060' },
+      { label: 'Study', value: 'study', color: '#6080aa' },
+      { label: 'Journal', value: 'journal', color: '#aa8050' },
+    ];
+
+    let notes = JSON.parse(localStorage.getItem('notes_app_v1') || '[]');
+    let activeId = null;
+    let saveTimer = null;
+
+    function persist() { localStorage.setItem('notes_app_v1', JSON.stringify(notes)); }
+    function getNote(id) { return notes.find(n => n.id === id); }
+
+    function fmt(ts) {
+      const diff = Date.now() - ts;
+      if (diff < 60000) return 'just now';
+      if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+      if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+      return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function esc(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function newNote() {
+      const note = { id: Date.now().toString(), title: '', content: '', tag: '', created: Date.now(), updated: Date.now() };
+      notes.unshift(note);
+      persist();
+      activeId = note.id;
+      renderList();
+      renderEditor();
+      setTimeout(() => document.getElementById('titleInput')?.focus(), 50);
+    }
+
+    function openNote(id) {
+      activeId = id;
+      renderList();
+      renderEditor();
+    }
+
+    function deleteNote(id) {
+      if (!confirm('Delete this note?')) return;
+      notes = notes.filter(n => n.id !== id);
+      if (activeId === id) activeId = null;
+      persist();
+      renderList();
+      renderEditor();
+      toast('Note deleted');
+    }
+
+    function renderList() {
+      const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+      const filtered = notes.filter(n => n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q));
+      document.getElementById('sidebarFooter').textContent = notes.length + ' note' + (notes.length !== 1 ? 's' : '');
+      const list = document.getElementById('notesList');
+      if (!filtered.length) {
+        list.innerHTML = '<div class="empty-list">' + (q ? 'No results.' : 'No notes yet.\nClick + New Note to start.') + '</div>';
+        return;
+      }
+      list.innerHTML = filtered.map(n => {
+        const tag = TAGS.find(t => t.value === n.tag);
+        const tagHtml = tag && tag.value ? `<span class="note-tag" style="background:${tag.color}22;color:${tag.color}">${tag.label}</span>` : '';
+        return `<div class="note-item${n.id === activeId ? ' active' : ''}" onclick="openNote('${n.id}')">
+          <div class="note-item-title">${n.title || '<em style="opacity:.4">Untitled</em>'}</div>
+          <div class="note-item-preview">${(n.content.replace(/\n/g,' ') || 'No content')}</div>
+          <div class="note-item-meta"><span class="note-item-date">${fmt(n.updated)}</span>${tagHtml}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderEditor() {
+      const main = document.getElementById('mainArea');
+      const note = getNote(activeId);
+      if (!note) {
+        main.innerHTML = `<div class="welcome"><div class="welcome-title">empty.</div><div class="welcome-sub">Select a note or create one</div></div>`;
+        return;
+      }
+      const tagOpts = TAGS.map(t => `<option value="${t.value}"${note.tag===t.value?' selected':''}>${t.label}</option>`).join('');
+      const wc = note.content.trim() ? note.content.trim().split(/\s+/).length : 0;
+      main.innerHTML = `
+        <div class="editor-toolbar">
+          <input class="title-input" id="titleInput" value="${esc(note.title)}" placeholder="Untitled" oninput="onTitleChange(this.value)" />
+          <div class="toolbar-actions">
+            <select class="tag-select" onchange="onTagChange(this.value)">${tagOpts}</select>
+            <button class="icon-btn danger" onclick="deleteNote('${note.id}')" title="Delete">✕</button>
+          </div>
+        </div>
+        <div class="editor-body">
+          <textarea class="note-textarea" id="noteContent" placeholder="Start writing…" oninput="onContentChange(this.value)">${esc(note.content)}</textarea>
+        </div>
+        <div class="editor-footer">
+          <span id="footerMeta">${fmt(note.updated)} · ${wc} word${wc!==1?'s':''}</span>
+          <span><span class="save-dot" id="saveDot"></span><span id="saveLabel">saved</span></span>
+        </div>`;
+    }
+
+    function markUnsaved() {
+      const dot = document.getElementById('saveDot');
+      const lbl = document.getElementById('saveLabel');
+      if (dot) dot.classList.add('unsaved');
+      if (lbl) lbl.textContent = 'editing…';
+    }
+
+    function markSaved() {
+      const note = getNote(activeId);
+      const dot = document.getElementById('saveDot');
+      const lbl = document.getElementById('saveLabel');
+      const meta = document.getElementById('footerMeta');
+      if (dot) dot.classList.remove('unsaved');
+      if (lbl) lbl.textContent = 'saved';
+      if (meta && note) {
+        const wc = note.content.trim() ? note.content.trim().split(/\s+/).length : 0;
+        meta.textContent = fmt(note.updated) + ' · ' + wc + ' word' + (wc!==1?'s':'');
+      }
+    }
+
+    function scheduleSave() {
+      markUnsaved();
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => { persist(); renderList(); markSaved(); }, 600);
+    }
+
+    function onTitleChange(val) {
+      const note = getNote(activeId); if (!note) return;
+      note.title = val; note.updated = Date.now(); scheduleSave();
+    }
+
+    function onContentChange(val) {
+      const note = getNote(activeId); if (!note) return;
+      note.content = val; note.updated = Date.now(); scheduleSave();
+    }
+
+    function onTagChange(val) {
+      const note = getNote(activeId); if (!note) return;
+      note.tag = val; note.updated = Date.now(); persist(); renderList();
+    }
+
+    function toast(msg) {
+      const t = document.createElement('div');
+      t.className = 'toast'; t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => { t.classList.add('hide'); setTimeout(() => t.remove(), 260); }, 1800);
+    }
+
+    document.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') { e.preventDefault(); newNote(); }
+    });
+
+    renderList();
+    renderEditor();
+  </script>
+</body>
+</html>
